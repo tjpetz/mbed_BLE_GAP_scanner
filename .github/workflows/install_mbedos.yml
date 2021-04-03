@@ -1,6 +1,8 @@
 name: Install MbedOS
 
 on:
+  pull_request:
+  push:
   workflow_dispatch:
   
 jobs:
@@ -23,6 +25,6 @@ jobs:
       - name: Configure mbed
         run: |
           arduino-cli config dump -v
-          ls -lR /home/runner/.arduino15
+          ls -lR /home/runner/.arduino15/packages/arduino/tools/arm-non-eabi-gcc
         
   
