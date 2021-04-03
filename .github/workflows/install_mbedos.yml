@@ -23,9 +23,7 @@ jobs:
        
       - name: Configure mbed
         run: |
-          ls -lR
-          ls /
-          which arduino-cli
+          ls -lR `which arduino-cli`
           
         
   
