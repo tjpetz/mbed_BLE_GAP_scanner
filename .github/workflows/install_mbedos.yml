@@ -1,0 +1,16 @@
+name: Install MbedOS
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  install:
+    run-on: ubuntu-latest
+    
+    steps:
+      - name: install MbedOS
+        run: |
+          python3 -m pip install mbed-cli
+          mbed --help
+          
+  
