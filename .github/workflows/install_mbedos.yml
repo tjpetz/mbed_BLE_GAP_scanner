@@ -8,9 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Install Arduino-CLI
+        uses: arduino/setup-arduino-cli@v1.1.1
+        
+      - name: Install the platform
+        run: |
+          arduino-cli core update-index
+          arudino-cli core install arduino:mbed
+          
       - name: install MbedOS
         run: |
           python3 -m pip install mbed-cli
           mbed --help
-          
+       
+      - name: Configure mbeb
+        run: ls -lR
   
