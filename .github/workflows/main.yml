@@ -36,9 +36,9 @@ jobs:
       - name: Install platform
         run: |
           arduino-cli core update-index
-          arduino-cli core install arduino:nano:nano_33_ble
+          arduino-cli core install 
       
       # Compile the sketch
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn arduino:nano:nano_33_ble ./mbed_BLE_GAP_scanner
+        run: arduino-cli compile --fqbn arduino:mbed:nano33ble ./mbed_BLE_GAP_scanner
         
