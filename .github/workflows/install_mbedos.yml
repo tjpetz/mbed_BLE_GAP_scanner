@@ -24,6 +24,6 @@ jobs:
       - name: Configure mbed
         run: |
           ls -lR `which arduino-cli`
-          
+          ls -lR /opt/hostedtoolcache/arduino-cli
         
   
