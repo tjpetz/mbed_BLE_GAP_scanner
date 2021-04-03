@@ -23,9 +23,6 @@ jobs:
       - name: Configure mbed
         run: |
           arduino-cli config dump -v
-          ls -l /opt/hostedtoolcache
-          ls -l /opt
-          ls -lR `which arduino-cli`
-          ls -lR /opt/hostedtoolcache/arduino-cli
+          ls -lR /home/runner/.arduino15
         
   
