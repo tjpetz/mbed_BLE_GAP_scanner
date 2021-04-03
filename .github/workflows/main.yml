@@ -36,7 +36,7 @@ jobs:
       - name: Install platform
         run: |
           arduino-cli core update-index
-          arduino-cli core install 
+          arduino-cli core install arduino:mbed:nano33ble
       
       # Compile the sketch
       - name: Compile Sketch
