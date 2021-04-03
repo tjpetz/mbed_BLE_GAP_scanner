@@ -14,13 +14,13 @@ jobs:
       - name: Install the platform
         run: |
           arduino-cli core update-index
-          arudino-cli core install arduino:mbed
+          # arudino-cli core install arduino:mbed
           
       - name: install MbedOS
         run: |
           python3 -m pip install mbed-cli
           mbed --help
        
-      - name: Configure mbeb
+      - name: Configure mbed
         run: ls -lR
   
