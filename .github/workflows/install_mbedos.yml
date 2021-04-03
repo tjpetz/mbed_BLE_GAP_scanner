@@ -24,7 +24,9 @@ jobs:
        
       - name: Configure mbed
         run: |
-          arduino-cli config dump -v
-          ls -lR /home/runner/.arduino15/packages/arduino/tools/arm-non-eabi-gcc
-        
+          mbed config -G GCC_ARM_PATH "/home/runner/.arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/bin"
+      
+      - name: Add arm GCC tools to the path
+        run: |
+          PATH=/home/runner/.arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/bin:$PATH
   
