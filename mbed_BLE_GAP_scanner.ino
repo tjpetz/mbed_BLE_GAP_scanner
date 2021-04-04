@@ -42,11 +42,9 @@ static const ble::ScanParameters scan_params(
 
 events::EventQueue event_queue;
 
-USBSerial serial(false);
-
 // Redirect the console to the USBSerial port
 mbed::FileHandle *mbed::mbed_override_console(int fd) {
-  return &serial;
+  return SerialUSB;
 }
 
 inline void print_error(ble_error_t err, const char* msg) {
