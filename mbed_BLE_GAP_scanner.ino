@@ -156,7 +156,15 @@ private:
     /** Set up and start scanning */
     void scan()
     {
-        ble_error_t error = _gap.setScanParameters(scan_params);
+
+        // Build the scan parameters
+
+        ble_error_t error = _gap.setScanParameters(
+          ble::ScanParameters()
+            .setPhys(true, true)
+            .setCodedPhyConfiguration(ble::scan_interval_t(80), ble::scan_window_t(60), false)
+            .set1mPhyConfiguration(ble::scan_interval_t(100), ble::scan_window_t(40), false)
+            );
         if (error) {
             print_error(error, "Error caused by Gap::setScanParameters");
             return;
@@ -181,76 +189,88 @@ private:
 private:
     /* Gap::EventHandler */
 
-    /** Look at scan payload to find a peer device and connect to it */
+    /** Report on found devices */
     void onAdvertisingReport(const ble::AdvertisingReportEvent &event) override
     {
-        printf("Scan found: %02x:%02x:%02x:%02x:%02x:%02x, Tx Power = %d, RSSI = %d\n",
+        printf("Scan found: %02x:%02x:%02x:%02x:%02x:%02x, Phy = %s, Tx Power = %d, RSSI = %d\n",
           event.getPeerAddress()[5], event.getPeerAddress()[4], event.getPeerAddress()[3],
           event.getPeerAddress()[2], event.getPeerAddress()[1], event.getPeerAddress()[0], 
-          event.getTxPower(), event.getRssi());
+          phy_to_string(event.getPrimaryPhy()), event.getTxPower(), event.getRssi());
         
-        // /* only look at events from devices at a close range */
-        // if (event.getRssi() < -65) {
-        //     return;
-        // }
-        // Serial.print("Found: ");
-        // print_address(event.getPeerAddress());
-
         ble::AdvertisingDataParser adv_parser(event.getPayload());
 
         /* parse the advertising payload*/
         while (adv_parser.hasNext()) {
-            ble::AdvertisingDataParser::element_t field = adv_parser.next();
+          ble::AdvertisingDataParser::element_t field = adv_parser.next();
 
-            if (field.type == ble::adv_data_type_t::SHORTENED_LOCAL_NAME)
-                printf("Has a shortened local name\n");
-            else if (field.type == ble::adv_data_type_t::COMPLETE_LOCAL_NAME) {
-                printf("Has complete local name: ");
-                char localname[128];
-                memset(localname, 0, 128);
-                memcpy(localname, field.value.data(), field.value.size());
-                printf("%s\n", localname);
-            } else if (field.type == ble::adv_data_type_t::SERVICE_DATA)
-                printf("Has service data\n");
-            else if (field.type == ble::adv_data_type_t::APPEARANCE)
-                printf("Has an appearance\n");
-            else if (field.type == ble::adv_data_type_t::FLAGS)
-                printf("Has flags\n");
-            else if (field.type == ble::adv_data_type_t::TX_POWER_LEVEL)
-                printf("TX Power Level\n");
-
+          if (field.type == ble::adv_data_type_t::FLAGS) {
+            printf("\tFlags = ");
+            ble::adv_data_flags_t flag(field.value.data()[0]);
+            if (flag.getGeneralDiscoverable())
+              printf("LE_GENERAL_DISCOVERABLE ");
+            if (flag.getlimitedDiscoverable())
+              printf("LE_LIMITED_DISCOVERABLE ");
+            if (flag.getBrEdrNotSupported())
+              printf("BREDR_NOT_SUPPORTED ");
+            if (flag.getSimultaneousLeBredrC())
+              printf("SIMULTANEOUS_LE_BREDR_C ");
+            if (flag.getSimultaneousLeBredrH())
+              printf("SIMULTANEOUS_LE_BREDR_H ");
+            printf("\n");                
+          } else if (field.type == ble::adv_data_type_t::INCOMPLETE_LIST_16BIT_SERVICE_IDS) {
+            printf("\tIncomplete List of 16bit Service IDs = ");
+            for (int i = 0; i < field.value.size(); i +=2) {
+              printf("%02x%02x", field.value.data()[1], field.value.data()[0]);
+            }
+            printf("\n");
+          } else if (field.type == ble::adv_data_type_t::COMPLETE_LIST_16BIT_SERVICE_IDS) {
+            printf("\tComplete List of 16bit Service IDs = ");
+            for (int i = 0; i < field.value.size(); i +=2) {
+              printf("%02x%02x", field.value.data()[1], field.value.data()[0]);
+            }
+            printf("\n");
+          } else if (field.type == ble::adv_data_type_t::INCOMPLETE_LIST_32BIT_SERVICE_IDS) {
+            printf("\tIncomplete List of 32bit Service IDs\n");
+          } else if (field.type == ble::adv_data_type_t::COMPLETE_LIST_32BIT_SERVICE_IDS) {
+            printf("\tComplete List of 32bit Service IDs\n");
+          } else if (field.type == ble::adv_data_type_t::INCOMPLETE_LIST_128BIT_SERVICE_IDS) {
+            printf("\tIncomplete List of 128bit Service IDs\n");
+          } else if (field.type == ble::adv_data_type_t::COMPLETE_LIST_128BIT_SERVICE_IDS) {
+            printf("\tComplete List of 128bit Service IDs\n");
+          } else if (field.type == ble::adv_data_type_t::SHORTENED_LOCAL_NAME) {
+            char localname[128];
+            memset(localname, 0, 128);
+            memcpy(localname, field.value.data(), field.value.size());
+            printf("\tShort Name = %s\n", localname);
+          } else if (field.type == ble::adv_data_type_t::COMPLETE_LOCAL_NAME) {
+            char localname[128];
+            memset(localname, 0, 128);
+            memcpy(localname, field.value.data(), field.value.size());
+            printf("\tComplete Name = %s\n", localname);
+          } else if (field.type == ble::adv_data_type_t::TX_POWER_LEVEL) {
+              printf("\tAdvertised TX Power Level = %d\n", field.value.data()[0]);
+          } else if (field.type == ble::adv_data_type_t::DEVICE_ID) {
+            printf("\tDevice ID = %d", field.value.size());
+          } else if (field.type == ble::adv_data_type_t::SLAVE_CONNECTION_INTERVAL_RANGE) {
+            printf("\tHas SLAVE_CONNECTION_INTERVAL_RANGE\n");
+          } else if (field.type == ble::adv_data_type_t::LIST_16BIT_SOLICITATION_IDS) {
+            printf("\tHas SLAVE_CONNECTION_INTERVAL_RANGE\n");
+          } else if (field.type == ble::adv_data_type_t::LIST_128BIT_SOLICITATION_IDS) {
+            printf("\tHas LIST_128BIT_SOLICITATION_IDS\n");
+          } else if (field.type == ble::adv_data_type_t::SERVICE_DATA) {
+            printf("\tHas service data\n");
+          } else if (field.type == ble::adv_data_type_t::SERVICE_DATA_16BIT_ID) {
+            printf("\tHas SERVICE_DATA_16BIT_ID\n");
+          } else if (field.type == ble::adv_data_type_t::SERVICE_DATA_128BIT_ID) {
+            printf("\tHas SERVICE_DATA_128BIT_ID\n");
+          } else if (field.type == ble::adv_data_type_t::APPEARANCE) {
+            printf("\tAppearance = %d\n", field.value.data()[0]);
+          } else if (field.type == ble::adv_data_type_t::ADVERTISING_INTERVAL) {
+            printf("\tHas ADVERTISING_INTERVAL\n");
+          } else if (field.type == ble::adv_data_type_t::MANUFACTURER_SPECIFIC_DATA) {
+            printf("\tHas MANUFACTURER_SPECIFIC_DATA\n");
+          } 
         }
-            // /* skip non discoverable device */
-            // if (field.type != ble::adv_data_type_t::FLAGS ||
-            //     field.value.size() != 1 ||
-            //     !ble::adv_data_flags_t(field.value[0]).getGeneralDiscoverable()) {
-            //     continue;
-            // }
-
-        //     /* connect to a discoverable device */
-
-        //     /* abort timeout as the mode will end on disconnection */
-        //     _event_queue.cancel(_cancel_handle);
-
-        //     Serial.print("We found a connectable device: ");
-        //     print_address(event.getPeerAddress());
-    
-        //     ble_error_t error = _gap.connect(
-        //         event.getPeerAddressType(),
-        //         event.getPeerAddress(),
-        //         ble::ConnectionParameters() // use the default connection parameters
-        //     );
-        //     if (error) {
-        //         print_error(error, "Error caused by Gap::connect");
-        //         return;
-        //     }
-
-        //     /* we may have already scan events waiting
-        //      * to be processed so we need to remember
-        //      * that we are already connecting and ignore them */
-        //     _is_connecting = true;
-        //     return;
-        // }
     }
 
     void onScanTimeout(const ble::ScanTimeoutEvent&) override
@@ -355,8 +375,7 @@ void schedule_ble_events(BLE::OnEventsToProcessCallbackContext *context)
 
 void setup()
 {
-    Serial.begin(115200);
-    delay(3000);
+    delay(7000);
 
     BLE &ble = BLE::Instance();
 
